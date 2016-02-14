@@ -27,26 +27,15 @@
       "metadata": {
         "description": "Subnet Prefix"
       }
-    },
-    "publicIPAddressType": {
-      "type": "string",
-      "defaultValue": "Dynamic",
-      "allowedValues": [
-        "Dynamic",
-        "Static"
-      ],
-      "metadata": {
-        "description": "Public IP type"
-      }
     }
   },
   "variables": {
-    "virtualNetworkName": "virtualNetwork1",
-    "publicIPAddressName1": "publicIp1",
-    "publicIPAddressName2": "publicIp2",
-    "subnetName": "subnet1",
-    "loadBalancerName": "loadBalancer1",
-    "nicName": "networkInterface1",
+    "virtualNetworkName": "VN-Website",
+    "publicIPAddressName1": "ViewPointIP",
+    "publicIPAddressName2": "ViewPointFeedbackIP",
+    "subnetName": "SN-Website",
+    "loadBalancerName": "LB-Website",
+    "nicName": "NI-Website",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "publicIPAddressID1": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName1'))]",
@@ -61,27 +50,6 @@
     "apiVersion": "2015-06-15"
   },
   "resources": [
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIPAddressName1')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
-        "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsNameforLBIP')]"
-        }
-      }
-    },
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIPAddressName2')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "publicIPAllocationMethod": "[parameters('publicIPAddressType')]"
-      }
-    },
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
@@ -115,7 +83,7 @@
       "properties": {
         "ipConfigurations": [
           {
-            "name": "ipconfig1",
+            "name": "IPC-Website",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
@@ -143,7 +111,7 @@
       "properties": {
         "frontendIPConfigurations": [
           {
-            "name": "loadBalancerFrontEnd1",
+            "name": "LBFE-ViewPointIP",
             "properties": {
               "publicIPAddress": {
                 "id": "[variables('publicIPAddressID1')]"
@@ -151,7 +119,7 @@
             }
           },
           {
-            "name": "loadBalancerFrontEnd2",
+            "name": "LBFE-ViewPointFeedbackIP",
             "properties": {
               "publicIPAddress": {
                 "id": "[variables('publicIPAddressID2')]"
@@ -161,12 +129,29 @@
         ],
         "backendAddressPools": [
           {
-            "name": "loadBalancerBackEnd"
+            "name": "LB-Backend"
           }
         ],
         "loadBalancingRules": [
           {
-            "name": "LBRuleForVIP1",
+            "name": "HTTP-ViewPointIP",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('frontEndIPConfigID1')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('lbBackendPoolID')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "probe": {
+                "id": "[variables('lbProbeID')]"
+              }
+            }
+          },
+          {
+            "name": "HTTPS-ViewPointIP",
             "properties": {
               "frontendIPConfiguration": {
                 "id": "[variables('frontEndIPConfigID1')]"
@@ -183,7 +168,7 @@
             }
           },
           {
-            "name": "LBRuleForVIP2",
+            "name": "HTTPS-ViewPointFeedbackIP",
             "properties": {
               "frontendIPConfiguration": {
                 "id": "[variables('frontEndIPConfigID2')]"
@@ -194,6 +179,23 @@
               "protocol": "tcp",
               "frontendPort": 443,
               "backendPort": 444,
+              "probe": {
+                "id": "[variables('lbProbeID')]"
+              }
+            }
+          },
+          {
+            "name": "RDP-TBAzure1",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('frontEndIPConfigID1')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('lbBackendPoolID')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": 3389,
+              "backendPort": 3389,
               "probe": {
                 "id": "[variables('lbProbeID')]"
               }
